@@ -1,21 +1,34 @@
 import React from 'react'
-import { Text, ActivityIndicator} from 'react-native'
+import { Text, ActivityIndicator, ListView} from 'react-native'
 import style from '../Style'
+import axios from 'axios'
+import WeatherRow from './weather/Row'
 
 export default class List extends React.Component {
 
 	static navigationOptions = ({navigation}) => {
 		return {
-			// title: `Météo / ${navigation.state.params.city}`
+			title: `Météo / ${navigation.state.params.city}`
 		}
 	}
 
 	constructor (props) {
 		super(props)
 		this.state = {
-			city:  "Paris", // this.props.navigation.state.params.city,
+			city: this.props.navigation.state.params.city,
 			report: null
 		}
+		setTimeout(() => {
+			this.fetchWeather()			
+		}, 1000)
+
+	}
+
+	fetchWeather () {
+		axios.get(`http://api.openweathermap.org/data/2.5/forecast/daily?q=${this.state.city}&mode=json&units=metric&cnt=10&APPID=94c6cf0868fa5cb930a5e2d71baf0dbf`)
+		.then((response) => {
+			this.setState({report: response.data})
+		})
 	}
 
 	render () {
@@ -24,9 +37,16 @@ export default class List extends React.Component {
 				<ActivityIndicator color={style.color} size="large" />
 			)
 		} else {
+			const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2})
 			return(
-			<Text> Salut les gens </Text>
-		)
+			<ListView
+				dataSource={ds.cloneWithRows(this.state.report.list)}
+				renderRow={(row, j, k) => <WeatherRow day={row} index={parseInt(k, 10)} />}
+			/>
+			)
 		}
 	}
 }
+
+
+
